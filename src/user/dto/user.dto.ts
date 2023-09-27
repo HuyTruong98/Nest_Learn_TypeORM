@@ -1,7 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { IsEmail, IsNotEmpty } from 'class-validator';
-
-export class AuthDto {
+export class userDto {
   @IsNotEmpty()
   firstName?: string;
 
@@ -14,22 +13,7 @@ export class AuthDto {
   @IsNotEmpty()
   @IsEmail()
   email?: string;
-
   status?: number;
   regDt?: string;
   modDt?: string;
-}
-
-export class LoginTokenDto {
-  access_token: string;
-  refresh_token: string;
-}
-
-export class BodyLogin {
-  @IsNotEmpty()
-  password?: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  email?: string;
 }

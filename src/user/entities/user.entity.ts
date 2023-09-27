@@ -24,7 +24,7 @@ export class User {
   password: string;
 
   @Column({ nullable: true, default: null })
-  refresh_token?: string;
+  refresh_token: string;
 
   @CreateDateColumn()
   regDt: Date;
