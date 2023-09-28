@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 import { AuthDto } from 'src/auth/dto/auth.dto';
 import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
 import { filterQueryDto, listUserDto, updateUserDto } from './dto/user.dto';
@@ -16,6 +17,7 @@ export class UserService {
 
   async findAllService(query: filterQueryDto): Promise<listUserDto> {
     const { page, perPage, keyword, status, sort } = query;
+
     const options: filterQueryDto = {
       page: Number(page) || 1,
       perPage: Number(perPage) || 10,
@@ -23,6 +25,7 @@ export class UserService {
       status: status || undefined,
       sort: sort || 'DESC',
     };
+
     const skip = (options.page - 1) * options.perPage;
 
     let whereClause;
@@ -83,6 +86,7 @@ export class UserService {
     const newBody = {
       ...body,
       password: hashPwd,
+      regDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
     };
     return await this.userRepository.save(newBody);
   }
@@ -100,31 +104,54 @@ export class UserService {
         body.password,
         Number(this.config.get('SALT_ROUND')),
       );
+
       return await this.userRepository.update(id, {
         ...body,
         password: hashPwd,
+        modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
       });
     }
-    return await this.userRepository.update(id, body);
+    return await this.userRepository.update(id, {
+      ...body,
+      modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+    });
   }
 
   async deleteByIdService(id: number): Promise<DeleteResult> {
+    const checkUser = await this.findUserById(id);
+    if (!checkUser) {
+      throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
+    }
     return await this.userRepository.delete(id);
+  }
+
+  async updateAvatarService(id: number, avatar: string): Promise<UpdateResult> {
+    const checkUser = await this.findUserById(id);
+    if (!checkUser) {
+      throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
+    }
+    return await this.userRepository.update(id, { avatar });
   }
 
   private async findUserById(id: number) {
     return await this.userRepository.findOneBy({ id });
   }
 
-  private parseSortParam(sortParam: string) {
+  private parseSortParam(sortParam: string): Record<string, 'ASC' | 'DESC'> {
+    if (!sortParam) {
+      return {};
+    }
+
     const sortSegments = sortParam.split(',').map((item) => item.trim());
 
     const order: Record<string, 'ASC' | 'DESC'> = {};
 
-    sortSegments.forEach((item) => {
-      const [fieldName, orderDirection] = item.split(' ');
-      order[fieldName] =
-        orderDirection.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    sortSegments.forEach((segment) => {
+      const [fieldName, orderDirection] = segment.split(' ');
+      if (fieldName && orderDirection) {
+        order[fieldName] =
+          orderDirection.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+      }
     });
 
     return order;

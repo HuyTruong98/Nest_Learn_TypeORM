@@ -1,16 +1,21 @@
 /* eslint-disable prettier/prettier */
+import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class AuthDto {
+  @ApiProperty()
   @IsNotEmpty()
   firstName?: string;
 
+  @ApiProperty()
   @IsNotEmpty()
   lastName?: string;
 
+  @ApiProperty()
   @IsNotEmpty()
   password?: string;
 
+  @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
   email?: string;
@@ -26,10 +31,12 @@ export class LoginTokenDto {
 }
 
 export class BodyLogin {
-  @IsNotEmpty()
-  password?: string;
-
+  @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
   email?: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  password?: string;
 }

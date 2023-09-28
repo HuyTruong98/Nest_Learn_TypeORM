@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthDto, BodyLogin, LoginTokenDto } from './dto/auth.dto';
@@ -22,11 +23,13 @@ export class AuthService {
     if (checkEmail) {
       throw new HttpException('Email already exists', HttpStatus.CONFLICT);
     }
+
     const hasPwd = await this.hasPassword(body.password);
     const newBody = {
       ...body,
       refresh_token: 'refresh_token_string',
       password: hasPwd,
+      regDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
     };
     return await this.userRepository.save(newBody);
   }

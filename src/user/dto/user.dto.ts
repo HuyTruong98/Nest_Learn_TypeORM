@@ -26,11 +26,6 @@ export class filterQueryDto {
   sort?: string;
 }
 
-export class SortDto {
-  field: string;
-  direction: 'asc' | 'desc';
-}
-
 export class listUserDto {
   data: User[];
   total: number;
@@ -38,4 +33,11 @@ export class listUserDto {
   nextPage: number;
   lastPage: number;
   prevPage: number;
+}
+
+export class UserDataDto {
+  id: number;
+  email: string;
+  iat: number;
+  exp: number;
 }

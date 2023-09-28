@@ -1,10 +1,5 @@
 /* eslint-disable prettier/prettier */
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -26,11 +21,14 @@ export class User {
   @Column({ nullable: true, default: null })
   refresh_token: string;
 
-  @CreateDateColumn()
-  regDt: Date;
+  @Column({ nullable: true, default: null })
+  avatar: string;
+
+  @Column()
+  regDt: string;
 
   @Column({ nullable: true, default: null })
-  modDt: Date;
+  modDt: string;
 
   @Column({ default: 1 })
   status: number;
