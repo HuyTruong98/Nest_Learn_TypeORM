@@ -1,19 +1,41 @@
 /* eslint-disable prettier/prettier */
-import { IsEmail, IsNotEmpty } from 'class-validator';
-export class userDto {
-  @IsNotEmpty()
-  firstName?: string;
 
-  @IsNotEmpty()
-  lastName?: string;
+import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { User } from '../entities/user.entity';
 
-  @IsNotEmpty()
-  password?: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  email?: string;
+export class updateUserDto {
   status?: number;
-  regDt?: string;
-  modDt?: string;
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+}
+
+export class filterQueryDto {
+  @IsOptional()
+  @IsNumber()
+  page?: number;
+  @IsOptional()
+  @IsNumber()
+  perPage?: number;
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+  @IsOptional()
+  @IsNumber()
+  status?: number;
+  sort?: string;
+}
+
+export class SortDto {
+  field: string;
+  direction: 'asc' | 'desc';
+}
+
+export class listUserDto {
+  data: User[];
+  total: number;
+  currentPage: number;
+  nextPage: number;
+  lastPage: number;
+  prevPage: number;
 }

@@ -1,10 +1,11 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthDto } from 'src/auth/dto/auth.dto';
-import { Repository } from 'typeorm';
+import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
+import { filterQueryDto, listUserDto, updateUserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
@@ -13,8 +14,33 @@ export class UserService {
     private config: ConfigService,
   ) {}
 
-  async findAllService(): Promise<User[]> {
-    return await this.userRepository.find({
+  async findAllService(query: filterQueryDto): Promise<listUserDto> {
+    const { page, perPage, keyword, status, sort } = query;
+    const options: filterQueryDto = {
+      page: Number(page) || 1,
+      perPage: Number(perPage) || 10,
+      keyword: keyword || undefined,
+      status: status || undefined,
+      sort: sort || 'DESC',
+    };
+    const skip = (options.page - 1) * options.perPage;
+
+    let whereClause;
+    if (options.keyword) {
+      whereClause = [
+        { email: Like(`%${options.keyword}%`) },
+        { firstName: Like(`%${options.keyword}%`) },
+        { lastName: Like(`%${options.keyword}%`) },
+      ];
+    }
+
+    const order = this.parseSortParam(options.sort);
+
+    const [res, total] = await this.userRepository.findAndCount({
+      where: whereClause,
+      order,
+      take: options.perPage,
+      skip,
       select: [
         'id',
         'firstName',
@@ -25,10 +51,22 @@ export class UserService {
         'modDt',
       ],
     });
+    const lastPage = Math.ceil(total / options.perPage);
+    const nextPage = options.page + 1 > lastPage ? null : options.page + 1;
+    const prevPage = options.page - 1 < 1 ? null : options.page - 1;
+
+    return {
+      data: res,
+      total,
+      currentPage: options.page,
+      nextPage,
+      lastPage,
+      prevPage,
+    };
   }
 
   async findOneService(id: number): Promise<User> {
-    return await this.userRepository.findOneBy({ id });
+    return await this.findUserById(id);
   }
 
   async createService(body: AuthDto): Promise<User> {
@@ -38,11 +76,57 @@ export class UserService {
     if (checkEmail) {
       throw new HttpException('Email already exists!', HttpStatus.CONFLICT);
     }
-    const hashPwd = await bcrypt.hash(body.password, 10);
+    const hashPwd = await bcrypt.hash(
+      body.password,
+      Number(this.config.get('SALT_ROUND')),
+    );
     const newBody = {
       ...body,
       password: hashPwd,
     };
     return await this.userRepository.save(newBody);
+  }
+
+  async updateByIdService(
+    id: number,
+    body: updateUserDto,
+  ): Promise<UpdateResult> {
+    const checkUser = await this.findUserById(id);
+    if (!checkUser) {
+      throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
+    }
+    if (body.password) {
+      const hashPwd = await bcrypt.hash(
+        body.password,
+        Number(this.config.get('SALT_ROUND')),
+      );
+      return await this.userRepository.update(id, {
+        ...body,
+        password: hashPwd,
+      });
+    }
+    return await this.userRepository.update(id, body);
+  }
+
+  async deleteByIdService(id: number): Promise<DeleteResult> {
+    return await this.userRepository.delete(id);
+  }
+
+  private async findUserById(id: number) {
+    return await this.userRepository.findOneBy({ id });
+  }
+
+  private parseSortParam(sortParam: string) {
+    const sortSegments = sortParam.split(',').map((item) => item.trim());
+
+    const order: Record<string, 'ASC' | 'DESC'> = {};
+
+    sortSegments.forEach((item) => {
+      const [fieldName, orderDirection] = item.split(' ');
+      order[fieldName] =
+        orderDirection.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    });
+
+    return order;
   }
 }
