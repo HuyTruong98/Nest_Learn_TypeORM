@@ -5,7 +5,8 @@ import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { AuthDto } from 'src/auth/dto/auth.dto';
 import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
-import { filterQueryDto, listUserDto, updateUserDto } from './dto/user.dto';
+import { parseSortParam } from '../../helpers/config';
+import { filterQueryDto, listDto, updateUserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class UserService {
     private config: ConfigService,
   ) {}
 
-  async findAllService(query: filterQueryDto): Promise<listUserDto> {
+  async findAllService(query: filterQueryDto): Promise<listDto> {
     const { page, perPage, keyword, status, sort } = query;
 
     const options: filterQueryDto = {
@@ -37,7 +38,7 @@ export class UserService {
       ];
     }
 
-    const order = this.parseSortParam(options.sort);
+    const order = parseSortParam(options.sort);
 
     const [res, total] = await this.userRepository.findAndCount({
       where: whereClause,
@@ -135,25 +136,5 @@ export class UserService {
 
   private async findUserById(id: number) {
     return await this.userRepository.findOneBy({ id });
-  }
-
-  private parseSortParam(sortParam: string): Record<string, 'ASC' | 'DESC'> {
-    if (!sortParam) {
-      return {};
-    }
-
-    const sortSegments = sortParam.split(',').map((item) => item.trim());
-
-    const order: Record<string, 'ASC' | 'DESC'> = {};
-
-    sortSegments.forEach((segment) => {
-      const [fieldName, orderDirection] = segment.split(' ');
-      if (fieldName && orderDirection) {
-        order[fieldName] =
-          orderDirection.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-      }
-    });
-
-    return order;
   }
 }

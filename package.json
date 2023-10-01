@@ -8,8 +8,8 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start --host 172.16.0.111",
-    "start:dev": "nest start --watch",
+    "start": "nest start",
+    "start:dev": "nest start --host 192.168.1.16 --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -36,6 +36,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "dotenv": "^16.3.1",
     "moment": "^2.29.4",
     "mysql2": "^3.6.1",
     "path": "^0.12.7",

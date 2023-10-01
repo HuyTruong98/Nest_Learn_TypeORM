@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,23 +12,29 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Request } from 'express';
 import { storageConfig } from 'helpers/config';
+import { extname } from 'path';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthDto } from 'src/auth/dto/auth.dto';
 import {
+  FileMulterDto,
   UserDataDto,
   filterQueryDto,
-  listUserDto,
+  listDto,
   updateUserDto,
 } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UserService } from './user.service';
-import { extname } from 'path';
 
 @ApiBearerAuth()
 @ApiTags('Users')
@@ -41,7 +48,7 @@ export class UserController {
   @ApiQuery({ name: 'perPage' })
   @ApiQuery({ name: 'keyword', required: false })
   @ApiQuery({ name: 'sort', required: false })
-  findAll(@Query() query: filterQueryDto): Promise<listUserDto> {
+  findAll(@Query() query: filterQueryDto): Promise<listDto> {
     return this.userService.findAllService(query);
   }
 
@@ -66,6 +73,11 @@ export class UserController {
   }
 
   @Post('/upload-avatar')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'file',
+    type: FileMulterDto,
+  })
   @UseInterceptors(
     FileInterceptor('avatar', {
       storage: storageConfig('img'),

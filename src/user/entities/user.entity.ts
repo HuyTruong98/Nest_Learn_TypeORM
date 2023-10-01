@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Post } from 'src/post/entities/post.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
@@ -32,4 +33,7 @@ export class User {
 
   @Column({ default: 1 })
   status: number;
+
+  @OneToMany(() => Post, (post) => post.user)
+  post: Post[];
 }
