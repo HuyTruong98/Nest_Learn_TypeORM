@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { parseSortParam } from 'helpers/config';
 import * as moment from 'moment';
 import { User } from 'src/user/entities/user.entity';
-import { Like, Repository, UpdateResult } from 'typeorm';
-import { PostDto, QueryPostDto, UpdatePostDto } from './dto/post.dto';
+import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
+import { CreatePostDto, QueryPostDto, UpdatePostDto } from './dto/post.dto';
 import { Post } from './entities/post.entity';
 import { listDto } from 'src/user/dto/user.dto';
 
@@ -15,7 +15,7 @@ export class PostService {
     @InjectRepository(Post) private postRepository: Repository<Post>,
   ) {}
 
-  async createPostService(userId: number, body: PostDto): Promise<Post> {
+  async createPostService(userId: number, body: CreatePostDto): Promise<Post> {
     const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) {
       throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
@@ -24,6 +24,7 @@ export class PostService {
       const res = await this.postRepository.save({
         ...body,
         regDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        status: 1,
         user,
       });
 
@@ -35,13 +36,14 @@ export class PostService {
   }
 
   async getAllPostService(query: QueryPostDto): Promise<listDto> {
-    const { page, perPage, keyword, sort } = query;
+    const { page, perPage, keyword, sort, category } = query;
 
     const options: QueryPostDto = {
       page: Number(page) || 1,
       perPage: Number(perPage) || 10,
       keyword: keyword || '',
       sort: sort || 'DESC',
+      category: category || undefined,
     };
 
     const skip = (options.page - 1) * options.perPage;
@@ -49,8 +51,11 @@ export class PostService {
     let whereClause;
     if (options.keyword) {
       whereClause = [
-        { title: Like(`%${options.keyword}%`) },
-        { description: Like(`%${options.keyword}%`) },
+        { title: Like(`%${options.keyword}%`), category: { id: category } },
+        {
+          description: Like(`%${options.keyword}%`),
+          category: { id: category },
+        },
       ];
     }
     const order = parseSortParam(options.sort);
@@ -62,8 +67,13 @@ export class PostService {
       skip,
       relations: {
         user: true,
+        category: true,
       },
       select: {
+        category: {
+          id: true,
+          name: true,
+        },
         user: {
           id: true,
           firstName: true,
@@ -90,8 +100,12 @@ export class PostService {
   async findByIdService(id: number): Promise<Post> {
     const current_post = await this.postRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ['user', 'category'],
       select: {
+        category: {
+          id: true,
+          name: true,
+        },
         user: {
           id: true,
           firstName: true,
@@ -118,10 +132,27 @@ export class PostService {
       throw new HttpException('Post not exists !', HttpStatus.NOT_FOUND);
     }
     try {
-      return await this.postRepository.update(id, body);
+      return await this.postRepository.update(id, {
+        ...body,
+        modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      });
     } catch (error) {
       console.error(error);
       throw new HttpException('Can not update post', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deleteByIdService(id: number): Promise<DeleteResult> {
+    const current_post = await this.postRepository.findOneBy({ id });
+    if (!current_post) {
+      throw new HttpException('Post not exists !', HttpStatus.NOT_FOUND);
+    }
+
+    try {
+      return await this.postRepository.delete(id);
+    } catch (error) {
+      console.error(error);
+      throw new HttpException('Can not delete post', HttpStatus.BAD_REQUEST);
     }
   }
 }

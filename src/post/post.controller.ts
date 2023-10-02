@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -11,23 +12,29 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { storageConfig } from 'helpers/config';
 import { extname } from 'path';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserDataDto, listDto } from 'src/user/dto/user.dto';
-import { PostDto, QueryPostDto, UpdatePostDto } from './dto/post.dto';
-import { PostService } from './post.service';
+import { CreatePostDto, QueryPostDto, UpdatePostDto } from './dto/post.dto';
 import { Post as PostEntity } from './entities/post.entity';
+import { PostService } from './post.service';
 
+@ApiBearerAuth()
+@ApiTags('Posts')
 @Controller('posts')
 @UseGuards(AuthGuard)
 export class PostController {
   constructor(private postService: PostService) {}
 
   @Post('info')
+  @UsePipes(ValidationPipe)
   @UseInterceptors(
     FileInterceptor('thumbnail', {
       storage: storageConfig('post'),
@@ -53,7 +60,7 @@ export class PostController {
   create(
     @Req()
     req: Request & { user_data: UserDataDto; fileValidationError: string },
-    @Body() body: PostDto,
+    @Body() body: CreatePostDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (req.fileValidationError) {
@@ -104,14 +111,11 @@ export class PostController {
   )
   updateById(
     @Param('id') id: number,
+    @Req()
     req: Request & { user_data: UserDataDto; fileValidationError: string },
     @Body() body: UpdatePostDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log(
-      '🚀 ~ file: post.controller.ts:112 ~ PostController ~ req:',
-      req,
-    );
     if (req.fileValidationError) {
       throw new BadRequestException(req.fileValidationError);
     }
@@ -121,5 +125,10 @@ export class PostController {
     }
 
     return this.postService.updateByIdService(Number(id), body);
+  }
+
+  @Delete('/:id')
+  deleteById(@Param('id') id: number) {
+    return this.postService.deleteByIdService(Number(id));
   }
 }

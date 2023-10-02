@@ -7,7 +7,13 @@ import {
 } from '@nestjs/common';
 import { User } from 'src/user/entities/user.entity';
 import { AuthService } from './auth.service';
-import { AuthDto, BodyLogin, LoginTokenDto } from './dto/auth.dto';
+import {
+  AuthDto,
+  BodyLogin,
+  LoginTokenDto,
+  emailVerify,
+  refresh_token,
+} from './dto/auth.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Auth')
@@ -30,7 +36,12 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  refreshToken(@Body() { refresh_token }): Promise<LoginTokenDto> {
-    return this.authService.refreshTokenService(refresh_token);
+  refreshToken(@Body() body: refresh_token): Promise<LoginTokenDto> {
+    return this.authService.refreshTokenService(body.refresh_token);
+  }
+
+  @Post('verify-email')
+  sendEmailVerify(@Body() body: emailVerify): Promise<any> {
+    return this.authService.sendEmailVerifyService(body.email);
   }
 }
