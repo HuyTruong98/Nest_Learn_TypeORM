@@ -108,7 +108,10 @@ export class PostController {
     @Body() body: UpdatePostDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log("🚀 ~ file: post.controller.ts:112 ~ PostController ~ req:", req)
+    console.log(
+      '🚀 ~ file: post.controller.ts:112 ~ PostController ~ req:',
+      req,
+    );
     if (req.fileValidationError) {
       throw new BadRequestException(req.fileValidationError);
     }
