@@ -2,9 +2,10 @@ import {
   Body,
   Controller,
   Post,
-  ValidationPipe,
   UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from 'src/user/entities/user.entity';
 import { AuthService } from './auth.service';
 import {
@@ -14,7 +15,6 @@ import {
   emailVerify,
   refresh_token,
 } from './dto/auth.dto';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Auth')
 @Controller('auth')

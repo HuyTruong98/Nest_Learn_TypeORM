@@ -1,3 +1,4 @@
+import { MailerService } from '@nest-modules/mailer';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -7,7 +8,6 @@ import * as moment from 'moment';
 import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthDto, BodyLogin, LoginTokenDto } from './dto/auth.dto';
-import { MailerService } from '@nest-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -112,12 +112,24 @@ export class AuthService {
       );
     }
 
+    const tokenVerifyEmail = await this.generateTokenVerify(
+      {
+        id: checkUser.id,
+        email: checkUser.email,
+      },
+      this.config.get<string>('JWT_VERIFY_EXPIRATION_MINUTES'),
+    );
+
+    const verifyUrl = `http://localhost:${this.config.get(
+      'PORT',
+    )}/auth/verify-email/${tokenVerifyEmail}`;
+
     return await this.mailerService.sendMail({
-      to: email,
+      to: checkUser.email,
       subject: 'Welcome to my website',
-      template: './welcome',
+      template: 'verify',
       context: {
-        name: email,
+        linkToVerify: verifyUrl,
       },
     });
   }
@@ -149,5 +161,20 @@ export class AuthService {
     const hash = await bcrypt.hash(pwd, salt);
 
     return hash;
+  }
+
+  private async generateTokenVerify(
+    payload: {
+      id: number;
+      email: string;
+    },
+    expiresIn: string,
+  ) {
+    const verify_token = await this.jwtService.signAsync(payload, {
+      secret: this.config.get<string>('SECRET_KEY'),
+      expiresIn,
+    });
+
+    return verify_token;
   }
 }

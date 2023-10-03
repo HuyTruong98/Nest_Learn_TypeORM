@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <style>
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin:
+      0; padding: 0; } .container { background-color: #ffffff; max-width: 600px;
+      margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); } h3 { color: #333; } p {
+      font-size: 16px; color: #777; } .link { display: block; width: 200px;
+      margin: 0 auto; padding: 10px 20px; background-color: rgba(87, 17, 87,
+      0.544); border-radius: 5px; color: #fff !important; text-decoration: none;
+      cursor: pointer; transition: background-color 0.3s ease; text-align:
+      center; } .link:hover { background-color: rgba(87, 17, 87, 1); } .footer {
+      margin-top: 20px; text-align: center; font-size: 14px; color: #999; }
+      .link-container { max-width: 100%; overflow: hidden; white-space: nowrap;
+      max-height: 40px; margin-top: 15px; }
+    </style>
+  </head>
+  <body>
+    <div class='container'>
+      <h3>Dear User,</h3>
+      <p>
+        Thank you for signing up with our service. Your account is being
+        verified, click the button below to be authenticated. Please do not
+        share with others
+      </p>
+      <div>Authentication will expire within 15 minutes</div>
+      <div class='link-container'>
+        <a
+          href='{{linkToVerify}}'
+          class='link'
+          style='text-decoration: none;'
+        >Verify</a>
+      </div>
+    </div>
+    <div class='footer'>
+      <p>If you did not sign up for this service, please ignore this email.</p>
+    </div>
+  </body>
+</html>

@@ -1,17 +1,14 @@
+import { HandlebarsAdapter, MailerModule } from '@nest-modules/mailer';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from 'db/data-source';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { PostModule } from './post/post.module';
 import { CategoryModule } from './category/category.module';
-import { EmailController } from './email/email.controller';
-import { EmailModule } from './email/email.module';
-import { MailerModule, HandlebarsAdapter } from '@nest-modules/mailer';
-import { join } from 'path';
+import { PostModule } from './post/post.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -21,7 +18,6 @@ import { join } from 'path';
     AuthModule,
     PostModule,
     CategoryModule,
-    EmailModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
@@ -37,7 +33,7 @@ import { join } from 'path';
           from: `"No Reply" <${config.get('MAIL_FROM')}>`,
         },
         template: {
-          dir: join(__dirname, 'src/templates/email'),
+          dir: __dirname + '/templates',
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
@@ -47,7 +43,7 @@ import { join } from 'path';
       inject: [ConfigService],
     }),
   ],
-  controllers: [AppController, EmailController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
