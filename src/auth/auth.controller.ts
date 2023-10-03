@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
   Post,
+  Render,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -40,8 +43,14 @@ export class AuthController {
     return this.authService.refreshTokenService(body.refresh_token);
   }
 
-  @Post('verify-email')
-  sendEmailVerify(@Body() body: emailVerify): Promise<any> {
+  @Post('send-verify-email')
+  sendEmailVerify(@Body() body: emailVerify): Promise<string> {
     return this.authService.sendEmailVerifyService(body.email);
+  }
+
+  @Get('verify-email/:token')
+  @Render('verify-email')
+  verifyEmail(@Param('token') token: string): Promise<string> {
+    return this.authService.verifyEmailService(token);
   }
 }

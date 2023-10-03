@@ -96,7 +96,7 @@ export class AuthService {
     }
   }
 
-  async sendEmailVerifyService(email: string): Promise<any> {
+  async sendEmailVerifyService(email: string): Promise<string> {
     const checkUser = await this.userRepository.findOne({
       where: { email },
     });
@@ -122,16 +122,28 @@ export class AuthService {
 
     const verifyUrl = `http://localhost:${this.config.get(
       'PORT',
-    )}/auth/verify-email/${tokenVerifyEmail}`;
+    )}/api/auth/verify-email/${tokenVerifyEmail}`;
 
-    return await this.mailerService.sendMail({
+    await this.mailerService.sendMail({
       to: checkUser.email,
       subject: 'Welcome to my website',
-      template: 'verify',
+      template: 'send-email-verify',
       context: {
         linkToVerify: verifyUrl,
       },
     });
+    return 'Email verification sent successfully';
+  }
+
+  async verifyEmailService(token: string): Promise<string> {
+    const secret = this.config.get<string>('SECRET_KEY');
+    const decodedToken = await this.jwtService.verify(token, { secret });
+
+    if (decodedToken) {
+      return decodedToken.email;
+    } else {
+      throw new HttpException('Verify failed', HttpStatus.BAD_REQUEST);
+    }
   }
 
   private async generateToken(
