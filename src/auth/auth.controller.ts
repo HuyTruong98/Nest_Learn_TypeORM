@@ -5,10 +5,12 @@ import {
   Param,
   Post,
   Render,
+  Res,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { User } from 'src/user/entities/user.entity';
 import { AuthService } from './auth.service';
 import {
@@ -50,7 +52,24 @@ export class AuthController {
 
   @Get('verify-email/:token')
   @Render('verify-email')
-  verifyEmail(@Param('token') token: string): Promise<string> {
-    return this.authService.verifyEmailService(token);
+  async verifyEmail(
+    @Res() res: Response,
+    @Param('token') token: string,
+  ): Promise<{ email: string }> {
+    const email = await this.authService.verifyEmailService(token, res);
+    return { email };
+  }
+
+  @Post('send-email-reset-password')
+  sendEmailResetPwd(@Body() body: emailVerify): Promise<string> {
+    return this.authService.sendEmailResetPwdService(body.email);
+  }
+
+  @Get('reset-password/:token')
+  resetPassword(
+    @Res() res: Response,
+    @Param('token') token: string,
+  ): Promise<any> {
+    return this.authService.verifyTokenToChangePassword(token, res);
   }
 }

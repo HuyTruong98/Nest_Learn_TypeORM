@@ -1,5 +1,10 @@
 import { MailerService } from '@nest-modules/mailer';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,6 +13,7 @@ import * as moment from 'moment';
 import { User } from 'src/user/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthDto, BodyLogin, LoginTokenDto } from './dto/auth.dto';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -135,14 +141,97 @@ export class AuthService {
     return 'Email verification sent successfully';
   }
 
-  async verifyEmailService(token: string): Promise<string> {
-    const secret = this.config.get<string>('SECRET_KEY');
-    const decodedToken = await this.jwtService.verify(token, { secret });
+  async verifyEmailService(token: string, res: Response): Promise<string> {
+    try {
+      const secret = this.config.get<string>('SECRET_KEY');
+      const decodedToken = await this.jwtService.verify(token, { secret });
 
-    if (decodedToken) {
-      return decodedToken.email;
-    } else {
-      throw new HttpException('Verify failed', HttpStatus.BAD_REQUEST);
+      if (decodedToken) {
+        this.userRepository.update(decodedToken.id, {
+          status: 2,
+          modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        });
+        return decodedToken.email;
+      } else {
+        throw new HttpException('Verify failed', HttpStatus.BAD_REQUEST);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        res.render('expired');
+      } else {
+        res.render('expired', {
+          errorMessage:
+            'Your verification email has expired, please create a new request',
+        });
+      }
+    }
+  }
+
+  async sendEmailResetPwdService(email: string): Promise<string> {
+    const checkUser = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!checkUser) {
+      throw new HttpException('Email is not exists', HttpStatus.NOT_FOUND);
+    }
+
+    if (checkUser.status === 1) {
+      throw new HttpException(
+        'Email must be authenticated before password reset',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const tokenResetEmail = await this.generateTokenVerify(
+      {
+        id: checkUser.id,
+        email: checkUser.email,
+      },
+      this.config.get<string>('JWT_VERIFY_EXPIRATION_MINUTES'),
+    );
+
+    const verifyUrl = `http://localhost:${this.config.get(
+      'PORT',
+    )}/api/auth/reset-password/${tokenResetEmail}`;
+
+    await this.mailerService.sendMail({
+      to: checkUser.email,
+      subject: 'Welcome to my website',
+      template: 'send-email-reset-password',
+      context: {
+        linkToVerify: verifyUrl,
+      },
+    });
+
+    return 'Email reset password sent successfully';
+  }
+
+  async verifyTokenToChangePassword(
+    token: string,
+    res: Response,
+  ): Promise<string> {
+    try {
+      const secret = this.config.get<string>('SECRET_KEY');
+      const decodedToken = await this.jwtService.verify(token, { secret });
+
+      if (decodedToken) {
+        return decodedToken.email;
+      } else {
+        throw new HttpException(
+          'Reset password failed',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        res.render('expired');
+      } else {
+        res.render('expired', {
+          errorMessage:
+            'Your verification email has expired, please create a new request',
+        });
+      }
     }
   }
 

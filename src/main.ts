@@ -11,6 +11,7 @@ async function bootstrap() {
   app.enableCors();
   app.useStaticAssets('.');
   app.setGlobalPrefix('api');
+  app.setBaseViewsDir(__dirname + '/templates');
   app.setViewEngine('hbs');
 
   const config = new DocumentBuilder()
