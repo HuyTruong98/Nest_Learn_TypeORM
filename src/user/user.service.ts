@@ -131,6 +131,7 @@ export class UserService {
     if (!checkUser) {
       throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
     }
+
     return await this.userRepository.update(id, { avatar });
   }
 

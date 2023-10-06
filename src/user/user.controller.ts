@@ -22,10 +22,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Request } from 'express';
-import { storageConfig } from 'helpers/config';
+// import { storageConfig } from 'helpers/config';
+// import { extname } from 'path';
 import { extname } from 'path';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { AuthDto } from 'src/auth/dto/auth.dto';
+import { UploadService } from 'src/firebase/firebase.service';
 import {
   FileMulterDto,
   UserDataDto,
@@ -41,7 +43,10 @@ import { UserService } from './user.service';
 @Controller('user')
 @UseGuards(AuthGuard)
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private uploadService: UploadService,
+  ) {}
 
   @Get('list')
   @ApiQuery({ name: 'page' })
@@ -75,12 +80,12 @@ export class UserController {
   @Post('/upload-avatar')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'file',
+    description: 'avatar',
     type: FileMulterDto,
   })
   @UseInterceptors(
     FileInterceptor('avatar', {
-      storage: storageConfig('img'),
+      // storage: storageConfig('img'),
       fileFilter: (req, file, cb) => {
         const ext = extname(file.originalname);
         const allowedExtArr = ['.png', '.jpg', '.jpeg'];
@@ -100,7 +105,7 @@ export class UserController {
       },
     }),
   )
-  uploadImg(
+  async uploadImg(
     @Req()
     req: Request & { user_data: UserDataDto; fileValidationError: string },
     @UploadedFile() file: Express.Multer.File,
@@ -111,9 +116,10 @@ export class UserController {
     if (!file) {
       throw new BadRequestException('File is required!');
     }
+    const imageUrl = await this.uploadService.uploadImageToFirebase(file);
     return this.userService.updateAvatarService(
       req.user_data.id,
-      file.destination + '/' + file.filename,
+      imageUrl as string,
     );
   }
 }

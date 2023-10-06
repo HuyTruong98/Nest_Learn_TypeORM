@@ -1,51 +1,33 @@
-// src/firebase/firebase.service.ts
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
-export class FirebaseService {
-  private storageBucket: admin.storage.Bucket;
+export class UploadService {
+  async uploadImageToFirebase(avatar: Express.Multer.File): Promise<string> {
+    const bucket = admin.storage().bucket();
 
-  constructor() {
-    const serviceAccount = JSON.parse(
-      fs.readFileSync(
-        path.resolve(__dirname, '../../path/to/your/firebase-key.json'),
-        'utf8',
-      ),
-    );
+    const uniqueFilename = `avatars/${Date.now()}-${avatar.originalname}`;
 
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    });
-
-    this.storageBucket = admin.storage().bucket();
-  }
-
-  async uploadImage(file: Express.Multer.File): Promise<string> {
-    const uniqueFilename = Date.now() + '-' + file.originalname;
-
-    const fileUpload = this.storageBucket.file(uniqueFilename);
-
-    const blobStream = fileUpload.createWriteStream({
-      metadata: {
-        contentType: file.mimetype,
-      },
-    });
+    const blob = bucket.file(uniqueFilename);
+    const blobStream = blob.createWriteStream();
 
     blobStream.on('error', (error) => {
-      throw error;
+      throw new HttpException(
+        `Error uploading file: ${error}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return new Promise<string>((resolve, reject) => {
-      blobStream.on('finish', () => {
-        const imageUrl = `https://storage.googleapis.com/${this.storageBucket.name}/${uniqueFilename}`;
-        resolve(imageUrl);
+      blobStream.on('finish', async () => {
+        const publicUrl = `https://storage.cloud.google.com/${bucket.name}/${blob.name}`;
+
+        resolve(publicUrl);
       });
 
-      blobStream.end(file.buffer);
+      blobStream.end(avatar.buffer);
     });
   }
 }
