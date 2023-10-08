@@ -1,6 +1,13 @@
 import { Category } from 'src/category/entities/category.entity';
+import { OrderProduct } from 'src/order/entities/order-product.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class Post {
@@ -20,6 +27,9 @@ export class Post {
   status: number;
 
   @Column()
+  quantity: number;
+
+  @Column()
   regDt: string;
 
   @Column({ nullable: true, default: null })
@@ -30,4 +40,7 @@ export class Post {
 
   @ManyToOne(() => Category, (category) => category.posts)
   category: Category;
+
+  @OneToMany(() => OrderProduct, (orderProduct) => orderProduct.post)
+  orderProducts: OrderProduct[];
 }

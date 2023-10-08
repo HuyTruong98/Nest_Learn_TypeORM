@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoryModule } from './category/category.module';
 import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UserModule } from './user/user.module';
       }),
       inject: [ConfigService],
     }),
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

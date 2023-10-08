@@ -1,3 +1,4 @@
+import { Order } from 'src/order/entities/order.entity';
 import { Post } from 'src/post/entities/post.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -35,4 +36,7 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user)
   post: Post[];
+
+  @OneToMany(() => Order, (order) => order.user)
+  order: Order[];
 }

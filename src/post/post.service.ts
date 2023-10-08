@@ -2,17 +2,20 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { parseSortParam } from 'helpers/config';
 import * as moment from 'moment';
+import { Category } from 'src/category/entities/category.entity';
+import { listDto } from 'src/user/dto/user.dto';
 import { User } from 'src/user/entities/user.entity';
 import { DeleteResult, Like, Repository, UpdateResult } from 'typeorm';
 import { CreatePostDto, QueryPostDto, UpdatePostDto } from './dto/post.dto';
 import { Post } from './entities/post.entity';
-import { listDto } from 'src/user/dto/user.dto';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Post) private postRepository: Repository<Post>,
+    @InjectRepository(Category)
+    private categoryRepository: Repository<Category>,
   ) {}
 
   async createPostService(userId: number, body: CreatePostDto): Promise<Post> {
@@ -20,12 +23,19 @@ export class PostService {
     if (!user) {
       throw new HttpException('User not exists !', HttpStatus.NOT_FOUND);
     }
+    const category = await this.categoryRepository.findOneBy({
+      id: body.category.id,
+    });
+    if (!category) {
+      throw new HttpException('Category not exists !', HttpStatus.NOT_FOUND);
+    }
     try {
       const res = await this.postRepository.save({
         ...body,
         regDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
         status: 1,
         user,
+        category,
       });
 
       return await this.postRepository.findOneBy({ id: res.id });
