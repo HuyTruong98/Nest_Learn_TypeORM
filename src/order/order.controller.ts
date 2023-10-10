@@ -1,8 +1,9 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { UserDataDto } from 'src/user/dto/user.dto';
+import { orderDto } from './dto/order';
 import { OrderService } from './order.service';
 
 @ApiBearerAuth()
@@ -15,8 +16,11 @@ export class OrderController {
   @Post('add')
   createOrder(
     @Req() req: Request & { user_data: UserDataDto },
-    @Body() body: any,
+    @Body() body: orderDto,
   ) {
     return this.orderService.createOrderService(req['user_data'].id, body);
   }
+
+  // @Get('list')
+  // getOrders() {}
 }
