@@ -76,33 +76,7 @@ export class OrderProductService {
           modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
         },
       );
-
-      // return {
-      //   id: newProduct?.id,
-      //   postId: newProduct.postId,
-      //   quantity: newQuantity,
-      // };
     });
-
-    // for (const updatePost of result) {
-    //   const postId = await this.postRepository.findOneBy({
-    //     id: updatePost.postId,
-    //   });
-
-    //   if (postId && !isCorrect) {
-    //     await this.postRepository.update(
-    //       {
-    //         id: updatePost.postId,
-    //       },
-    //       {
-    //         quantity:
-    //           postId.quantity !== updatePost.quantity
-    //             ? postId.quantity + updatePost.quantity
-    //             : postId.quantity,
-    //       },
-    //     );
-    //   }
-    // }
 
     return newProducts.forEach(async (x) => {
       await this.orderProductRepository.update(x.id, {
