@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { OrderProductService } from 'src/order-product/order-product.service';
 import { Post } from 'src/post/entities/post.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 import { orderDto, orderUpdateDto } from './dto/order';
 import { Order } from './entities/order.entity';
 
@@ -74,7 +74,7 @@ export class OrderService {
     userId: number,
     orderId: number,
     body: orderUpdateDto,
-  ): Promise<any> {
+  ): Promise<UpdateResult> {
     const user = await this.userRepository.findOneBy({ id: userId });
     const orderById = await this.getOrderById(orderId);
     if (!user) {
@@ -87,17 +87,17 @@ export class OrderService {
       );
     }
 
-    await this.orderRepository.update(orderId, {
-      modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
-      description: body.description,
-    });
-
-    return await this.orderProductService.updateProducts(
+    await this.orderProductService.updateProducts(
       body.orderProducts,
       orderById.orderProducts.map((e) => ({
         postId: e.post.id,
         quantity: e.quantity,
       })),
     );
+
+    return await this.orderRepository.update(orderId, {
+      modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+      description: body.description,
+    });
   }
 }

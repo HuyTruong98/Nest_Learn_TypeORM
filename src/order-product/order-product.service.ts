@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as moment from 'moment';
 import { Post } from 'src/post/entities/post.entity';
 import { Repository } from 'typeorm';
 import {
@@ -50,8 +51,7 @@ export class OrderProductService {
     newProducts: bodyUpdateOrderProductsDto[],
     oldProducts: bodyUpdateOrderProductsDto[],
   ) {
-    let isCorrect = false;
-    const result = newProducts.map((newProduct) => {
+    newProducts.forEach(async (newProduct) => {
       const correspondingOldProduct = oldProducts.find(
         (oldProduct) => oldProduct.postId === newProduct.postId,
       );
@@ -61,35 +61,48 @@ export class OrderProductService {
           ? (correspondingOldProduct ? correspondingOldProduct.quantity : 0) -
             newProduct.quantity
           : correspondingOldProduct.quantity;
-      if (newProduct.quantity === correspondingOldProduct.quantity) {
-        isCorrect = true;
-      }
-      return {
-        id: newProduct?.id,
-        postId: newProduct.postId,
-        quantity: newQuantity,
-      };
-    });
 
-    for (const updatePost of result) {
       const postId = await this.postRepository.findOneBy({
-        id: updatePost.postId,
+        id: newProduct.postId,
       });
 
-      if (postId && !isCorrect) {
-        await this.postRepository.update(
-          {
-            id: updatePost.postId,
-          },
-          {
-            quantity:
-              postId.quantity !== updatePost.quantity
-                ? postId.quantity + updatePost.quantity
-                : postId.quantity,
-          },
-        );
-      }
-    }
+      await this.postRepository.update(
+        { id: newProduct.postId },
+        {
+          quantity:
+            newProduct.quantity !== correspondingOldProduct.quantity
+              ? postId.quantity + newQuantity
+              : postId.quantity,
+          modDt: moment(new Date()).format('YYYY-MM-DD HH:mm:ss'),
+        },
+      );
+
+      // return {
+      //   id: newProduct?.id,
+      //   postId: newProduct.postId,
+      //   quantity: newQuantity,
+      // };
+    });
+
+    // for (const updatePost of result) {
+    //   const postId = await this.postRepository.findOneBy({
+    //     id: updatePost.postId,
+    //   });
+
+    //   if (postId && !isCorrect) {
+    //     await this.postRepository.update(
+    //       {
+    //         id: updatePost.postId,
+    //       },
+    //       {
+    //         quantity:
+    //           postId.quantity !== updatePost.quantity
+    //             ? postId.quantity + updatePost.quantity
+    //             : postId.quantity,
+    //       },
+    //     );
+    //   }
+    // }
 
     return newProducts.forEach(async (x) => {
       await this.orderProductRepository.update(x.id, {

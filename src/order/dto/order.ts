@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  ArrayNotEmpty,
-  IsNotEmpty,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayNotEmpty, IsNotEmpty, MaxLength } from 'class-validator';
 import {
   bodyCreateOrderProductsDto,
   bodyUpdateOrderProductsDto,
@@ -14,7 +9,6 @@ import {
 export class orderDto {
   @ApiProperty({ type: [bodyCreateOrderProductsDto] })
   @ArrayNotEmpty()
-  @ValidateNested({ each: true })
   @Type(() => bodyCreateOrderProductsDto)
   orderProducts: bodyCreateOrderProductsDto[];
 
@@ -27,7 +21,6 @@ export class orderDto {
 export class orderUpdateDto {
   @ApiProperty({ type: [bodyUpdateOrderProductsDto] })
   @ArrayNotEmpty()
-  @ValidateNested({ each: true })
   @Type(() => bodyUpdateOrderProductsDto)
   orderProducts: bodyUpdateOrderProductsDto[];
 
